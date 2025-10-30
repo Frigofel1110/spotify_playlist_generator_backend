@@ -93,8 +93,19 @@ router.get("/callback", async (req, res) => {
     //Nettoyer le state
     delete req.session.spotifyState;
 
+    req.session.save((err) => {
+      if (err) {
+        console.error("Erreur lors de la sauvegarde de la session: ", err);
+        return res.status(500).json({
+          error: "Erreur lors de la sauvegarde de la session",
+        });
+      }
+    });
+
+    console.log("Session sauvegardé: ", req.session.user.id);
+
     //Rediriger vers le frontend
-    res.redirect("http://localhost:5173/dashboard");
+    res.redirect("http://127.0.0.1:5173/dashboard");
   } catch (error) {
     console.error(
       "Erreur lors du callback",

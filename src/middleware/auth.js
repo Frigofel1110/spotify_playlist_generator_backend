@@ -2,6 +2,7 @@
 function requireAuth(req, res, next) {
   //Vérifier si l'utilisateur est connecté
   if (!req.session.user) {
+    console.log(req.session);
     return res.status(401).json({
       error: "Authentication requires",
       redirectTo: "/auth/login",
