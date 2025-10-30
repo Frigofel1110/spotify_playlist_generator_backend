@@ -7,6 +7,7 @@ const authRoutes = require("./routes/auth");
 const generatorRoutes = require("./routes/generator");
 const ocrRoutes = require("./routes/ocr");
 
+
 var app = express();
 
 //MIDLEWARES
@@ -35,7 +36,7 @@ app.use(
 );
 
 app.use("/auth", authRoutes);
-app.use("/generator", generatorRoutes);
+app.use("/api/generator", generatorRoutes);
 app.use("/api/ocr", ocrRoutes);
 //START
 app.listen(3000, () => {
