@@ -45,9 +45,9 @@ function parseSongsFromText(text) {
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
 
-  const songs = [];
+  console.log(`\n📝 Parsing de ${lines.length} lignes...`);
 
-  //Patterns pour détécter l'artiste et le titre
+  const songs = [];
   const patterns = [
     /(.+)\s*-\s*(.+)/, // "Titre - Artiste"
     /(.+)\s*–\s*(.+)/, // "Titre – Artiste" (tiret long)
@@ -55,20 +55,79 @@ function parseSongsFromText(text) {
   ];
 
   for (const line of lines) {
-    //Ignorer les lignes trop courtes
-    if (line.length < 5) continue;
+    // ⭐ NETTOYAGE AGRESSIF
+    let cleanedLine = line
+      // Enlever "Mix -" au début
+      .replace(/^(Mix\s*-\s*)/i, "")
+      // Enlever toutes les parenthèses et leur contenu (complet ou partiel)
+      .replace(/\([^)]*$/g, "") // Parenthèse ouverte non fermée à la fin
+      .replace(/\([^)]*\)/g, "") // Parenthèses complètes
+      // Enlever les crochets
+      .replace(/\[[^\]]*$/g, "")
+      .replace(/\[[^\]]*\]/g, "")
+      // Enlever les deux-points traînants
+      .replace(/\s*:\s*$/g, "")
+      // Enlever "Mise a jour", "vues", etc.
+      .replace(/Mise\s+[aà]\s+jour.*/gi, "")
+      .replace(/\d+\s+(vues?|views?).*/gi, "")
+      // Enlever les mots-clés YouTube courants
+      .replace(/\b(Official|Music|Video|Audio|Lyric|Visualizer)\b/gi, "")
+      // Nettoyer les espaces multiples
+      .replace(/\s+/g, " ")
+      .trim();
 
-    //tester les patterns
+    console.log(`  Original: "${line}"`);
+    console.log(`  Cleaned:  "${cleanedLine}"`);
+
+    // Ignorer les lignes qui ressemblent à des durées
+    if (/^\d+:\d+$/.test(cleanedLine)) {
+      console.log(`  ⏭️  Ignoré (durée)`);
+      continue;
+    }
+
+    // Ignorer les lignes trop courtes
+    if (cleanedLine.length < 5) {
+      console.log(`  ⏭️  Ignoré (trop court)`);
+      continue;
+    }
+
+    // Ignorer les lignes qui sont juste des chiffres
+    if (/^\d+$/.test(cleanedLine)) {
+      console.log(`  ⏭️  Ignoré (numéro)`);
+      continue;
+    }
+
+    // Ignorer les lignes qui ne contiennent que des caractères spéciaux
+    if (/^[^a-zA-Z0-9]+$/.test(cleanedLine)) {
+      console.log(`  ⏭️  Ignoré (caractères spéciaux uniquement)`);
+      continue;
+    }
+
+    // Ignorer les lignes avec trop de virgules (listes d'artistes)
+    if ((cleanedLine.match(/,/g) || []).length > 2) {
+      console.log(`  ⏭️  Ignoré (liste d'artistes)`);
+      continue;
+    }
+
+    // Tester les patterns
+    let matched = false;
     for (const pattern of patterns) {
-      if (pattern.test(line)) {
-        songs.push(line);
+      if (pattern.test(cleanedLine)) {
+        songs.push(cleanedLine);
+        console.log(`  ✅ Ajouté: "${cleanedLine}"`);
+        matched = true;
         break;
       }
     }
+
+    if (!matched) {
+      console.log(`  ⚠️  Ignoré (pas de pattern)`);
+    }
   }
+
+  console.log(`\n🎵 Total: ${songs.length} chansons parsées\n`);
   return songs;
 }
-
 //ROUTE : POST /upload
 router.post(
   "/upload",

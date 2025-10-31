@@ -38,7 +38,7 @@ router.post("/create-from-songs", requireAuth, async (req, res) => {
           (result.tracksFound / result.tracksTotal) * 100
         ),
       },
-      tracks: result.tracksm,
+      tracks: result.tracks,
     });
   } catch (error) {
     console.error("Erreur lors de la création de la playlist", error);

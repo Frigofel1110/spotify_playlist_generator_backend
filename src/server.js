@@ -40,5 +40,5 @@ app.use("/api/generator", generatorRoutes);
 app.use("/api/ocr", ocrRoutes);
 //START
 app.listen(3000, () => {
-  console.log("Backend sur http://localhost:3000");
+  console.log("Backend sur http://127.0.0.1:3000");
 });
