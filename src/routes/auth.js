@@ -105,7 +105,7 @@ router.get("/callback", async (req, res) => {
     console.log("Session sauvegardé: ", req.session.user.id);
 
     //Rediriger vers le frontend
-    res.redirect("http://127.0.0.1:5173/dashboard");
+    res.redirect("http://127.0.0.1:5173/");
   } catch (error) {
     console.error(
       "Erreur lors du callback",
@@ -128,7 +128,7 @@ router.get("/me", (req, res) => {
   res.json({
     id: req.session.user.id,
     email: req.session.user.email,
-    diplayName: req.session.user.displayName,
+    displayName: req.session.user.displayName,
   });
 });
 
