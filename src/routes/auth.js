@@ -12,10 +12,10 @@ const REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URI;
 //ROUTE 1 : LOGIN
 router.get("/login", (req, res) => {
   console.log("Login route called");
-  const state = generateRandomString(16);
+  //const state = generateRandomString(16);
 
   //STOCKER state en session
-  req.session.spotifyState = state;
+ // req.session.spotifyState = state;
 
   const scope =
     "user-read-private user-read-email playlist-modify-public playlist-modify-private";
@@ -47,11 +47,11 @@ router.get("/callback", async (req, res) => {
   }
 
   //Vérifier le state (protection CSRF)
-  if (state !== req.session.spotifyState) {
-    return res
-      .status(403)
-      .json({ error: "Le state ne corresponds pas (attaque CSRF possible" });
-  }
+  // if (state !== req.session.spotifyState) {
+  //   return res
+  //     .status(403)
+  //     .json({ error: "Le state ne corresponds pas (attaque CSRF possible" });
+  // }
   try {
     //Echanger code contre access_token
     const tokenResponse = await axios.post(
