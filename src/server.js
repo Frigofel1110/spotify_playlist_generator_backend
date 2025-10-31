@@ -30,7 +30,7 @@ app.use(
         callback(new Error("Pas autorisé pars CORS"));
       }
     },
-    credentials: "true",
+    credentials: true,
   })
 );
 
@@ -44,7 +44,7 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production" ? "true" : "false",
+      secure: process.env.NODE_ENV === "production" ,
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 3600000, // 1heure
     },
