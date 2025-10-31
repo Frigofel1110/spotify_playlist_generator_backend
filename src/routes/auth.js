@@ -47,11 +47,11 @@ router.get("/callback", async (req, res) => {
   }
 
   //Vérifier le state (protection CSRF)
-  // if (state !== req.session.spotifyState) {
-  //   return res
-  //     .status(403)
-  //     .json({ error: "Le state ne corresponds pas (attaque CSRF possible" });
-  // }
+  if (state !== req.session.spotifyState) {
+    return res
+      .status(403)
+      .json({ error: "Le state ne corresponds pas (attaque CSRF possible" });
+  }
   try {
     //Echanger code contre access_token
     const tokenResponse = await axios.post(
