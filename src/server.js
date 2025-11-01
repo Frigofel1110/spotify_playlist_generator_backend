@@ -3,6 +3,8 @@ require("dotenv").config();
 const express = require("express");
 const session = require("express-session");
 const cors = require("cors");
+const fs = require("fs");  // ⭐ Ajouter
+const path = require("path");  // ⭐ Ajouter
 const authRoutes = require("./routes/auth");
 const generatorRoutes = require("./routes/generator");
 const ocrRoutes = require("./routes/ocr");
@@ -10,6 +12,14 @@ const ocrRoutes = require("./routes/ocr");
 var app = express();
 
 const PORT = process.env.PORT || 3000;
+
+const uploadsDir = path.join(__dirname, "src", "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log("✅ Dossier uploads créé:", uploadsDir);
+} else {
+  console.log("✅ Dossier uploads existe déjà");
+}
 
 if (process.env.NODE_ENV === 'production') {
   app.set('trust proxy', 1)
