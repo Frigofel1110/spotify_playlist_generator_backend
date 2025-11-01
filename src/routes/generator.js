@@ -14,13 +14,13 @@ router.post("/create-from-songs", requireAuth, async (req, res) => {
         error: "Le champs songs est requis",
       });
     }
-    console.log(`Création de la playlist pour ${req.session.user.displayName}`);
+    console.log(`Création de la playlist pour ${req.user.displayName}`);
     console.log(`${songs.length} sons à traiter`);
 
     //Appel le service
     const result = await spotifyService.processAndCreatePlaylist(
       songs,
-      req.session.user,
+      req.user,
       playlistName || "Bombardiro crocodilo"
     );
 
