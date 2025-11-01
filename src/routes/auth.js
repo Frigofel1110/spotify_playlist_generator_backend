@@ -15,7 +15,7 @@ router.get("/login", (req, res) => {
   const state = generateRandomString(16);
 
   //STOCKER state en session
-   req.session.spotifyState = state;
+  req.session.spotifyState = state;
 
   const scope =
     "user-read-private user-read-email playlist-modify-public playlist-modify-private";
@@ -100,12 +100,15 @@ router.get("/callback", async (req, res) => {
           error: "Erreur lors de la sauvegarde de la session",
         });
       }
+
+
+
+      console.log("Session sauvegardé: ", req.session.user.id);
+
+      //Rediriger vers le frontend
+      const frontendUrl = process.env.FRONTEND_URL || "https://127.0.0.1:5173";
+      res.redirect(`${frontendUrl}`)
     });
-
-    console.log("Session sauvegardé: ", req.session.user.id);
-
-    //Rediriger vers le frontend
-    res.redirect(process.env.FRONTEND_URL || "https://127.0.0.1:5173");
   } catch (error) {
     console.error(
       "Erreur lors du callback",
@@ -114,6 +117,7 @@ router.get("/callback", async (req, res) => {
     res.status(500).json({ error: `Echec lors de l'authentification` });
   }
 });
+
 
 //ROUTE 3 : ME (teste pour la connexion)
 router.get("/me", (req, res) => {

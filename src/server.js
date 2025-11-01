@@ -11,6 +11,10 @@ var app = express();
 
 const PORT = process.env.PORT || 3000;
 
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1)
+}
+
 //CORS
 const allowedOrigins = [
   "http://127.0.0.1:5173",
@@ -44,7 +48,7 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production" ,
+      secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 3600000, // 1heure
     },
@@ -59,6 +63,6 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 //START
-app.listen(3000, () => {
+app.listen(PORT, () => {
   console.log(`Backend sur le port: ${PORT}`);
 });
