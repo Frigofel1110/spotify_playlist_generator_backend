@@ -6,14 +6,22 @@ const path = require("path");
 const fs = require("fs");
 const requireAuth = require("../middleware/auth");
 
+const uploadsDir = process.env.NODE_ENV === "production" 
+  ? "/tmp/uploads"
+  : path.join(__dirname, "..", "uploads");
+
+// ⭐ Créer le dossier
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log("✅ Dossier uploads créé:", uploadsDir);
+}
 //CONFIG MULTER
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "src/uploads"); //dossier ou sauvegarder
+    cb(null, uploadsDir);  // ⭐ Chemin dynamique
   },
 
   filename: (req, file, cb) => {
-    //Nom unique
     const uniqueName = Date.now() + "-" + Math.round(Math.random() * 1e9);
     cb(null, uniqueName + path.extname(file.originalname));
   },
@@ -24,7 +32,7 @@ const fileFilter = (req, file, cb) => {
   const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
 
   if (allowedTypes.includes(file.mimetype)) {
-    cb(null, true); //Accepter
+    cb(null, true);
   } else {
     cb(new Error("Type de fichier non autorisé"), false);
   }
