@@ -3,6 +3,8 @@ const router = express.Router();
 const querystring = require("querystring");
 const generateRandomString = require("../utils/helpers");
 const axios = require("axios");
+const { buffer } = require("stream/consumers");
+const { timeStamp } = require("console");
 
 //CONFIG SPOTIFY
 const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
@@ -93,6 +95,18 @@ router.get("/callback", async (req, res) => {
     //Nettoyer le state
     delete req.session.spotifyState;
 
+    const tempsToken = Buffer.from(
+      JSON.stringify({
+        id: userData.id,
+        email: userData.email,
+        displayName: userData.displayNamem,
+        accessToken: access_token,
+        refreshToken: refresh_token,
+        expiresAt: Date.now() + expires_in * 1000,
+        timestamp: Date.now(),
+      })
+    ).toString('base64')
+
     req.session.save((err) => {
       if (err) {
         console.error("Erreur lors de la sauvegarde de la session: ", err);
@@ -101,13 +115,12 @@ router.get("/callback", async (req, res) => {
         });
       }
 
-
-
       console.log("Session sauvegardé: ", req.session.user.id);
 
       //Rediriger vers le frontend
+
       const frontendUrl = process.env.FRONTEND_URL || "https://127.0.0.1:5173";
-      res.redirect(`${frontendUrl}`)
+      res.redirect(`${frontendUrl}?token=${tempsToken}`)
     });
   } catch (error) {
     console.error(
