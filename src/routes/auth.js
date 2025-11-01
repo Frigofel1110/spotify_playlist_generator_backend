@@ -3,8 +3,6 @@ const router = express.Router();
 const querystring = require("querystring");
 const generateRandomString = require("../utils/helpers");
 const axios = require("axios");
-const { buffer } = require("stream/consumers");
-const { timeStamp } = require("console");
 
 //CONFIG SPOTIFY
 const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
@@ -119,7 +117,11 @@ router.get("/callback", async (req, res) => {
 
       //Rediriger vers le frontend
 
-      const frontendUrl = process.env.FRONTEND_URL || "https://127.0.0.1:5173";
+      const isProd = process.env.NODE_ENV === 'production';
+
+      console.log('prod? ', isProd);
+
+      const frontendUrl = isProd ? process.env.FRONTEND_URL : "http://127.0.0.1:5173";
       res.redirect(`${frontendUrl}?token=${tempsToken}`)
     });
   } catch (error) {
