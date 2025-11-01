@@ -2,7 +2,7 @@
 function requireAuth(req, res, next) {
 
   const authHeader = req.headers.authorization;
-  if (authHeader && authHeader.startWith('Bearer ')) {
+  if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.substring(7);
 
     try {
@@ -24,25 +24,25 @@ function requireAuth(req, res, next) {
       })
     }
   }
-  //Vérifier si l'utilisateur est connecté
-  if (!req.session.user) {
-    console.log(req.session);
-    return res.status(401).json({
-      error: "Authentication requires",
-      redirectTo: "/auth/login",
-    });
-  }
-
-  //Vérifier la validité du token
-  if (Date.now() >= req.session.user.expiresAt) {
+ //Vérifier si l'utilisateur est connecté
+if (req.session && req.session.user) {
+  // Vérifier la validité du token
+  if (Date.now() < req.session.user.expiresAt) {
+    req.user = req.session.user;  // ⭐ AJOUTER CETTE LIGNE
+    return next();
+  } else {
     return res.status(401).json({
       error: "Token expiré",
-      redirectTo: "auth/login",
+      redirectTo: "/",
     });
   }
+}
 
-  //Tout ok, continuer
-  next();
+// Aucune authentification valide
+return res.status(401).json({
+  error: "Authentication requise",
+  redirectTo: "/",
+});
 }
 
 module.exports = requireAuth;

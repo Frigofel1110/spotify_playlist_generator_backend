@@ -21,7 +21,7 @@ async function searchTrack(query, accessToken) {
     }
     const track = tracks[0];
 
-    if (!track.uri || track.id || !track.name) {
+    if (!track.uri || !track.id || !track.name) {
       console.log(`track incomplet ${query}`, track);
     }
     return {

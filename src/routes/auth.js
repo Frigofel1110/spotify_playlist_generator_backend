@@ -99,7 +99,7 @@ router.get("/callback", async (req, res) => {
       JSON.stringify({
         id: userData.id,
         email: userData.email,
-        displayName: userData.displayNamem,
+        displayName: userData.displayName,
         accessToken: access_token,
         refreshToken: refresh_token,
         expiresAt: Date.now() + expires_in * 1000,
