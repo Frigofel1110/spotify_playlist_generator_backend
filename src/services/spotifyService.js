@@ -1,8 +1,9 @@
 const axios = require("axios");
 
 //Chercher un son
-async function searchTrack(query, accessToken) {
+async function searchTrack(title, artist, accessToken) {
   try {
+    const query = `${title} ${artist}`
     const response = await axios.get("https://api.spotify.com/v1/search", {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -107,15 +108,19 @@ async function addTracksToPlaylist(playlistId, trackUris, accessToken) {
 
 async function searchTracks(songs, user) {
   const accessToken = user.accessToken;
-  const userId = user.id;
 
-  const searchPromises = songs.map((query) => searchTrack(query, accessToken));
+  const searchPromises = songs.map((song) => searchTrack(song.title, song.artist, accessToken));
   const searchResults = await Promise.all(searchPromises);
 
   const foundTracks = searchResults.filter((track) => track !== null);
 
-  console.log(foundTracks + "Sons trouvés sur spotify");}
 
+    return {
+    tracksFound: foundTracks.length,
+    tracksTotal: songs.length,
+    tracks: foundTracks,
+  };
+}
 //Fonction principal : Process
 async function processAndCreatePlaylist(
   songs,
