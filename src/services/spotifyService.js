@@ -105,6 +105,17 @@ async function addTracksToPlaylist(playlistId, trackUris, accessToken) {
   }
 }
 
+async function searchTracks(songs, user) {
+  const accessToken = user.accessToken;
+  const userId = user.id;
+
+  const searchPromises = songs.map((query) => searchTrack(query, accessToken));
+  const searchResults = await Promise.all(searchPromises);
+
+  const foundTracks = searchResults.filter((track) => track !== null);
+
+  console.log(foundTracks + "Sons trouvés sur spotify");}
+
 //Fonction principal : Process
 async function processAndCreatePlaylist(
   songs,
@@ -153,4 +164,5 @@ module.exports = {
   createPlaylist,
   addTracksToPlaylist,
   processAndCreatePlaylist,
+  searchTracks,
 };

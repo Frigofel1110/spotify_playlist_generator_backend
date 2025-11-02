@@ -8,6 +8,7 @@ const path = require("path");  // ⭐ Ajouter
 const authRoutes = require("./routes/auth");
 const generatorRoutes = require("./routes/generator");
 const ocrRoutes = require("./routes/ocr");
+const testSongsRoutes = require("./routes/testSongs");
 
 var app = express();
 
@@ -68,6 +69,7 @@ app.use(
 app.use("/auth", authRoutes);
 app.use("/api/generator", generatorRoutes);
 app.use("/api/ocr", ocrRoutes);
+app.use("/api/testSongs", testSongsRoutes);
 
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
