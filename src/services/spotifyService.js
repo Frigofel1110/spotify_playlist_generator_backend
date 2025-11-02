@@ -133,7 +133,7 @@ async function processAndCreatePlaylist(
   console.log("Traitement de: ", songs.length, " chansons...");
 
   //Cherche tous les sons
-  const searchPromises = songs.map((query) => searchTrack(query, accessToken));
+  const searchPromises = songs.map((song) => searchTrack(song.title, song.artist, accessToken));
   const searchResults = await Promise.all(searchPromises);
 
   //Filtrer les résultats
