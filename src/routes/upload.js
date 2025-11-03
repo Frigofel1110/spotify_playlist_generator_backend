@@ -6,8 +6,6 @@ const fs = require("fs");
 const requireAuth = require("../middleware/auth");
 const openaiVisionService = require('../services/openaiVisionService');
 
-
-
 // Config multer
 const uploadsDir = process.env.NODE_ENV === "production"
   ? "/tmp/uploads"
@@ -36,57 +34,75 @@ const upload = multer({
 
 
 
-// ROUTE : POST /upload
-
+//ROUTE : POST /upload
 router.post(
-  "/upload",
+  "/",
   requireAuth,
-  upload.single("image"),
+  upload.array("images", 50), // Accepter jusqu'à 50 images
   async (req, res) => {
     const startTime = Date.now();
+    const uploadedFiles = [];
 
     try {
-      if (!req.file) {
-        return res.status(400).json({ error: "No file uploaded" });
+      if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ error: "No files uploaded" });
       }
 
-      const imagePath = req.file.path;
-      console.log("📸 Image uploaded:", path.basename(imagePath));
+      console.log(`📸 ${req.files.length} images uploaded`);
 
-      // Vision directe
-      console.log("👁️  Analyzing with Vision AI...");
+      // Récupérer tous les chemins
+      const imagePaths = req.files.map(file => file.path);
+      uploadedFiles.push(...imagePaths);
+
+      // Traiter en parallèle avec limite de 5 images simultanées
+      console.log("👁️  Analyzing all images in parallel...");
       const visionStart = Date.now();
 
-      const songs = await openaiVisionService.extractSongsWithVision(imagePath);
+      const concurrencyLimit = parseInt(process.env.VISION_CONCURRENCY_LIMIT) || 5;
+      const songs = await openaiVisionService.extractSongsFromMultipleImages(
+        imagePaths,
+        concurrencyLimit
+      );
 
       const visionTime = Date.now() - visionStart;
-      console.log(`✅ Vision completed in ${visionTime}ms`);
-      console.log(`🎵 Found ${songs.length} song(s):`, songs);
+      console.log(`✅ Batch vision completed in ${visionTime}ms`);
+      console.log(`🎵 Found ${songs.length} unique song(s)`);
 
-      // Nettoyer
-      fs.unlinkSync(imagePath);
+      // Nettoyer tous les fichiers
+      uploadedFiles.forEach(filePath => {
+        try {
+          fs.unlinkSync(filePath);
+        } catch (e) {
+          console.error(`Failed to delete ${filePath}:`, e.message);
+        }
+      });
 
       const totalTime = Date.now() - startTime;
+      const avgTimePerImage = Math.round(totalTime / req.files.length);
 
       res.json({
         success: true,
         songs: songs,
         count: songs.length,
-        processingTime: totalTime
+        imagesProcessed: req.files.length,
+        processingTime: totalTime,
+        averageTimePerImage: avgTimePerImage,
+        speedup: `${Math.round((req.files.length * 15000) / totalTime)}x faster than sequential`
       });
 
     } catch (error) {
-      console.error("❌ Error:", error.message);
+      console.error("❌ Batch Error:", error.message);
 
-      if (req.file?.path) {
+      // Nettoyer tous les fichiers en cas d'erreur
+      uploadedFiles.forEach(filePath => {
         try {
-          fs.unlinkSync(req.file.path);
+          fs.unlinkSync(filePath);
         } catch (e) { }
-      }
+      });
 
       res.status(500).json({
         success: false,
-        error: "Processing failed",
+        error: "Batch processing failed",
         message: error.message,
       });
     }

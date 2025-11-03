@@ -2,19 +2,48 @@ const OpenAI = require("openai");
 const fs = require("fs");
 const path = require("path");
 
-
-
-function getOpenAIClient(){
-    return new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY
-    });
+function getOpenAIClient() {
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+  });
 }
 
-// EXTRACTION AVEC VISION
-async function extractSongsWithVision(imagePath) {
-  try {
+//Traite plusieurs images en parallèle avec limite de concurrence
+async function extractSongsFromMultipleImages(imagePaths, concurrencyLimit = 5) {
+  const openai = getOpenAIClient();
+  const results = [];
+  
+  // Traiter par batch pour éviter de surcharger l'API
+  for (let i = 0; i < imagePaths.length; i += concurrencyLimit) {
+    const batch = imagePaths.slice(i, i + concurrencyLimit);
+    
+    console.log(`🔄 Processing batch ${Math.floor(i / concurrencyLimit) + 1}/${Math.ceil(imagePaths.length / concurrencyLimit)} (${batch.length} images)`);
+    
+    // Traiter le batch en parallèle
+    const batchPromises = batch.map(imagePath => 
+      extractSongsWithVision(imagePath, openai)
+        .catch(err => {
+          console.error(`❌ Error processing ${path.basename(imagePath)}:`, err.message);
+          return []; // Retourner tableau vide en cas d'erreur
+        })
+    );
+    
+    const batchResults = await Promise.all(batchPromises);
+    results.push(...batchResults);
+  }
+  
+  // Fusionner tous les résultats et dédupliquer
+  const allSongs = results.flat();
+  const uniqueSongs = deduplicateSongs(allSongs);
+  
+  return uniqueSongs;
+}
 
-    const openai = getOpenAIClient(); 
+
+async function extractSongsWithVision(imagePath, openaiClient = null) {
+  try {
+    const openai = openaiClient || getOpenAIClient();
+    
     // Lire l'image en base64
     const imageBuffer = fs.readFileSync(imagePath);
     const base64Image = imageBuffer.toString('base64');
@@ -22,7 +51,7 @@ async function extractSongsWithVision(imagePath) {
     const mimeType = ext === '.png' ? 'image/png' : 'image/jpeg';
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini", // Vision + cheap
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "user",
@@ -50,7 +79,7 @@ BE PRECISE. Only return songs you can clearly see in the music player area.`
               type: "image_url",
               image_url: {
                 url: `data:${mimeType};base64,${base64Image}`,
-                detail: "high" // Meilleure qualité
+                detail: "auto" 
               }
             }
           ]
@@ -61,19 +90,18 @@ BE PRECISE. Only return songs you can clearly see in the music player area.`
     });
 
     const response = completion.choices[0].message.content;
-    console.log("🔍 Vision response:", response);
-
-    // Parser JSON (GPT peut ajouter markdown)
+    
+    // Parser JSON
     const jsonMatch = response.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      console.log("⚠️  No JSON in response");
+      console.log(`⚠️  No JSON in response for ${path.basename(imagePath)}`);
       return [];
     }
 
     const parsed = JSON.parse(jsonMatch[0]);
     let songs = parsed.songs || [];
 
-    // Filtrer titres suspects
+    // Filtrer titres 
     songs = songs.filter(song => {
       if (song.title.length < 2) return false;
       if (/^[A-Z]{1,2}$/i.test(song.title.trim())) return false;
@@ -83,11 +111,29 @@ BE PRECISE. Only return songs you can clearly see in the music player area.`
     return songs;
 
   } catch (error) {
-    console.error("❌ Vision API error:", error.message);
+    console.error(`❌ Vision API error for ${path.basename(imagePath)}:`, error.message);
     throw error;
   }
 }
 
-module.exports = {
-extractSongsWithVision,
+// Fonction pour dédupliquer les chansons
+function deduplicateSongs(songs) {
+  const seen = new Map();
+  
+  for (const song of songs) {
+    // Normaliser pour la comparaison
+    const key = `${song.title.toLowerCase().trim()}-${song.artist.toLowerCase().trim()}`;
+    
+    if (!seen.has(key)) {
+      seen.set(key, song);
+    }
+  }
+  
+  return Array.from(seen.values());
 }
+
+module.exports = {
+  extractSongsWithVision,
+  extractSongsFromMultipleImages,
+  deduplicateSongs
+};
