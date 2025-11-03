@@ -95,8 +95,9 @@ async function addTracksToPlaylist(playlistId, trackUris, accessToken) {
       console.log(
         `Ajouté ${batch.length} sons (batch ${Math.floor(i / batchSize) + 1})`
       );
-      return true;
     }
+    return true;
+
   } catch (error) {
     console.error(
       "Erreur ajout des sons",
