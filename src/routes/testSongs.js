@@ -8,6 +8,9 @@ router.post('/test-search-songs', requireAuth, async (req, res) => {
     try {
 
         const { songs } = req.body;
+
+
+
         const result = await spotifyService.searchTracks(
             songs,
             req.user

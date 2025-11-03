@@ -112,10 +112,17 @@ async function searchTracks(songs, user) {
   const searchPromises = songs.map((song) => searchTrack(song.title, song.artist, accessToken));
   const searchResults = await Promise.all(searchPromises);
 
-  const foundTracks = searchResults.filter((track) => track !== null);
 
+  const foundTracks =
+    [
+      ...new Map(
+        searchResults
+          .filter(track => track !== null)
+          .map(track => [track.id, track])
+      ).values()
+    ];
 
-    return {
+  return {
     tracksFound: foundTracks.length,
     tracksTotal: songs.length,
     tracks: foundTracks,

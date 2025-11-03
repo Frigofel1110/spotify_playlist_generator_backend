@@ -11,7 +11,7 @@ const openai = new OpenAI({
 });
 
 // Config multer
-const uploadsDir = process.env.NODE_ENV === "production" 
+const uploadsDir = process.env.NODE_ENV === "production"
   ? "/tmp/uploads"
   : path.join(__dirname, "..", "uploads");
 
@@ -36,9 +36,7 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 },
 });
 
-// ═══════════════════════════════════════════════════════════
-// EXTRACTION DIRECTE AVEC VISION
-// ═══════════════════════════════════════════════════════════
+// EXTRACTION AVEC VISION
 
 async function extractSongsWithVision(imagePath) {
   try {
@@ -89,35 +87,33 @@ BE PRECISE. Only return songs you can clearly see in the music player area.`
 
     const response = completion.choices[0].message.content;
     console.log("🔍 Vision response:", response);
-    
+
     // Parser JSON (GPT peut ajouter markdown)
     const jsonMatch = response.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       console.log("⚠️  No JSON in response");
       return [];
     }
-    
+
     const parsed = JSON.parse(jsonMatch[0]);
     let songs = parsed.songs || [];
-    
+
     // Filtrer titres suspects
     songs = songs.filter(song => {
       if (song.title.length < 2) return false;
       if (/^[A-Z]{1,2}$/i.test(song.title.trim())) return false;
       return true;
     });
-    
+
     return songs;
-    
+
   } catch (error) {
     console.error("❌ Vision API error:", error.message);
     throw error;
   }
 }
 
-// ═══════════════════════════════════════════════════════════
 // ROUTE : POST /upload
-// ═══════════════════════════════════════════════════════════
 
 router.post(
   "/upload",
@@ -125,7 +121,7 @@ router.post(
   upload.single("image"),
   async (req, res) => {
     const startTime = Date.now();
-    
+
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -137,9 +133,9 @@ router.post(
       // Vision directe
       console.log("👁️  Analyzing with Vision AI...");
       const visionStart = Date.now();
-      
+
       const songs = await extractSongsWithVision(imagePath);
-      
+
       const visionTime = Date.now() - visionStart;
       console.log(`✅ Vision completed in ${visionTime}ms`);
       console.log(`🎵 Found ${songs.length} song(s):`, songs);
@@ -148,7 +144,7 @@ router.post(
       fs.unlinkSync(imagePath);
 
       const totalTime = Date.now() - startTime;
-      
+
       res.json({
         success: true,
         songs: songs,
@@ -162,7 +158,7 @@ router.post(
       if (req.file?.path) {
         try {
           fs.unlinkSync(req.file.path);
-        } catch (e) {}
+        } catch (e) { }
       }
 
       res.status(500).json({
