@@ -1,9 +1,13 @@
 const OpenAI = require("openai");
 const path = require("path");
 const sharp = require('sharp');
+
+
+
+
 function getOpenAIClient() {
   return new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
+    apiKey: process.env.OPENAI_API_KEY,
   });
 }
 
@@ -11,6 +15,7 @@ function getOpenAIClient() {
 async function extractSongsFromMultipleImages(imagePaths, concurrencyLimit = 30) {
   const openai = getOpenAIClient();
   const results = [];
+
 
   // Traiter par batch pour éviter de surcharger l'API
   for (let i = 0; i < imagePaths.length; i += concurrencyLimit) {
@@ -45,7 +50,7 @@ async function extractSongsWithVision(imagePath, openaiClient = null) {
 
     //compression
     const compressedBuffer = await sharp(imagePath)
-      .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
+      .resize(800, 800, { fit: 'inside', withoutEnlargement: true })
       .jpeg({ quality: 75 })
       .toBuffer();
 
@@ -61,22 +66,7 @@ async function extractSongsWithVision(imagePath, openaiClient = null) {
           content: [
             {
               type: "text",
-              text: `Look at this music player screenshot and extract the currently playing song.
-
-CRITICAL RULES:
-- Find the MAIN song title (usually large text, ALL CAPS or Title Case)
-- Find the artist name (usually below the title, smaller)
-- Ignore: dates, times, app names, notifications, UI elements
-- The song info is typically near album artwork or player controls
-- Return JSON: {"songs": [{"title": "...", "artist": "..."}]}
-- If you can't find a song clearly: {"songs": []}
-
-Examples of what to look for:
-- "BLINDING LIGHTS" with "The Weeknd" below
-- "Giver" with "K.Flay" below
-- "QUE CE SOIT CLAIR" with "Paul Kalkbrenner, Stromae" below
-
-BE PRECISE. Only return songs you can clearly see in the music player area.`
+              text: `Extract song from music player screenshot. Return JSON: {"songs":[{"title":"...","artist":"..."}]}. Ignore UI elements.`
             },
             {
               type: "image_url",
@@ -88,7 +78,7 @@ BE PRECISE. Only return songs you can clearly see in the music player area.`
           ]
         }
       ],
-      max_tokens: 150,
+      max_tokens: 80,
       temperature: 0
     });
 

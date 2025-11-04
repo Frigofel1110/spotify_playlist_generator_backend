@@ -5,7 +5,6 @@ const path = require("path");
 const fs = require("fs");
 const requireAuth = require("../middleware/auth");
 const openaiVisionService = require('../services/openaiVisionService');
-const geminiVisionService = require('../services/geminiVisionService');
 
 // Config multer
 const uploadsDir = process.env.NODE_ENV === "production"
