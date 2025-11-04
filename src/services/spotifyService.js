@@ -145,7 +145,13 @@ async function processAndCreatePlaylist(
   const searchResults = await Promise.all(searchPromises);
 
   //Filtrer les résultats
-  const foundTracks = searchResults.filter((track) => track !== null);
+  const foundTracks = [
+    ...new Map(
+      searchResults
+      .filter(track => track !== null)
+      .map(track => [track.id, track])
+    ).values()
+  ];
 
   console.log(`${foundTracks.length} sons trouvés `);
 
