@@ -5,6 +5,7 @@ const path = require("path");
 const fs = require("fs");
 const requireAuth = require("../middleware/auth");
 const openaiVisionService = require('../services/openaiVisionService');
+const geminiVisionService = require('../services/geminiVisionService');
 
 // Config multer
 const uploadsDir = process.env.NODE_ENV === "production"
@@ -58,7 +59,7 @@ router.post(
       console.log("👁️  Analyzing all images in parallel...");
       const visionStart = Date.now();
 
-      const concurrencyLimit = parseInt(process.env.VISION_CONCURRENCY_LIMIT) || 5;
+      const concurrencyLimit = parseInt(process.env.VISION_CONCURRENCY_LIMIT) || 30;
       const songs = await openaiVisionService.extractSongsFromMultipleImages(
         imagePaths,
         concurrencyLimit

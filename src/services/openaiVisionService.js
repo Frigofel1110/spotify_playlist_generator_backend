@@ -1,7 +1,6 @@
 const OpenAI = require("openai");
-const fs = require("fs");
 const path = require("path");
-
+const sharp = require('sharp');
 function getOpenAIClient() {
   return new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
@@ -9,33 +8,33 @@ function getOpenAIClient() {
 }
 
 //Traite plusieurs images en parallèle avec limite de concurrence
-async function extractSongsFromMultipleImages(imagePaths, concurrencyLimit = 5) {
+async function extractSongsFromMultipleImages(imagePaths, concurrencyLimit = 30) {
   const openai = getOpenAIClient();
   const results = [];
-  
+
   // Traiter par batch pour éviter de surcharger l'API
   for (let i = 0; i < imagePaths.length; i += concurrencyLimit) {
     const batch = imagePaths.slice(i, i + concurrencyLimit);
-    
+
     console.log(`🔄 Processing batch ${Math.floor(i / concurrencyLimit) + 1}/${Math.ceil(imagePaths.length / concurrencyLimit)} (${batch.length} images)`);
-    
+
     // Traiter le batch en parallèle
-    const batchPromises = batch.map(imagePath => 
+    const batchPromises = batch.map(imagePath =>
       extractSongsWithVision(imagePath, openai)
         .catch(err => {
           console.error(`❌ Error processing ${path.basename(imagePath)}:`, err.message);
           return []; // Retourner tableau vide en cas d'erreur
         })
     );
-    
+
     const batchResults = await Promise.all(batchPromises);
     results.push(...batchResults);
   }
-  
+
   // Fusionner tous les résultats et dédupliquer
   const allSongs = results.flat();
   const uniqueSongs = deduplicateSongs(allSongs);
-  
+
   return uniqueSongs;
 }
 
@@ -43,12 +42,16 @@ async function extractSongsFromMultipleImages(imagePaths, concurrencyLimit = 5) 
 async function extractSongsWithVision(imagePath, openaiClient = null) {
   try {
     const openai = openaiClient || getOpenAIClient();
-    
+
+    //compression
+    const compressedBuffer = await sharp(imagePath)
+      .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
+      .jpeg({ quality: 75 })
+      .toBuffer();
+
     // Lire l'image en base64
-    const imageBuffer = fs.readFileSync(imagePath);
-    const base64Image = imageBuffer.toString('base64');
-    const ext = path.extname(imagePath).toLowerCase();
-    const mimeType = ext === '.png' ? 'image/png' : 'image/jpeg';
+    const base64Image = compressedBuffer.toString('base64');
+    const mimeType = 'image/jpeg';
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -79,18 +82,18 @@ BE PRECISE. Only return songs you can clearly see in the music player area.`
               type: "image_url",
               image_url: {
                 url: `data:${mimeType};base64,${base64Image}`,
-                detail: "auto" 
+                detail: "low"
               }
             }
           ]
         }
       ],
-      max_tokens: 300,
+      max_tokens: 150,
       temperature: 0
     });
 
     const response = completion.choices[0].message.content;
-    
+
     // Parser JSON
     const jsonMatch = response.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
@@ -119,16 +122,16 @@ BE PRECISE. Only return songs you can clearly see in the music player area.`
 // Fonction pour dédupliquer les chansons
 function deduplicateSongs(songs) {
   const seen = new Map();
-  
+
   for (const song of songs) {
     // Normaliser pour la comparaison
     const key = `${song.title.toLowerCase().trim()}-${song.artist.toLowerCase().trim()}`;
-    
+
     if (!seen.has(key)) {
       seen.set(key, song);
     }
   }
-  
+
   return Array.from(seen.values());
 }
 

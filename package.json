@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/Frigofel1110/backend#readme",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "axios": "^1.13.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
@@ -30,7 +31,8 @@
     "express-session": "^1.18.2",
     "multer": "^2.0.2",
     "nodemon": "^3.1.10",
-    "openai": "^6.7.0"
+    "openai": "^6.7.0",
+    "sharp": "^0.34.4"
   },
   "engines": {
     "node": ">18.0.0"
