@@ -50,8 +50,8 @@ async function extractSongsWithVision(imagePath, openaiClient = null) {
 
     //compression
     const compressedBuffer = await sharp(imagePath)
-      .resize(600, 600, { fit: 'inside', withoutEnlargement: true })
-      .jpeg({ quality: 60 })
+      .resize(800, 800, { fit: 'inside', withoutEnlargement: true })
+      .jpeg({ quality: 75 })
       .toBuffer();
 
     // Lire l'image en base64
